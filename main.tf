@@ -1,5 +1,5 @@
 module network {
-    source = "./modules/VPC"
+    source = "./modules/VPC_DecentMarten"
     project_id = var.project_id
     environment = var.environment
     enable_nat = var.enable_nat
