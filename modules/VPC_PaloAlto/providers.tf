@@ -14,19 +14,4 @@ terraform {
     #  version = "~> 2.0.0"
     #}
   }
-  backend "gcs" {
-    bucket  = "srinivas-terraform-state"
-    prefix = "dev"
-  }
 }
-
-provider "google" {
-  credentials = file(var.srinivas_credentials)
-}
-
-/*
-provider "panos" {
-  hostname = var.panos_hostname
-  username = var.panos_username
-  password = var.panos_password
-} */

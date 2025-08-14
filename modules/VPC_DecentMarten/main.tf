@@ -10,9 +10,13 @@ resource "random_pet" "network_suffix" {
 locals {
   network_name = "${var.environment}-vpc-${random_pet.network_suffix.id}"
   common_tags = {
-    Environment   = var.environment
+    Environment  = var.environment
     ManagedBy    = "terraform"
     NetworkName  = local.network_name
+  }
+  # Create a map for easy lookup of subnet CIDR ranges
+  subnet_cidrs = {
+    for subnet in var.subnets : subnet.name => subnet.ip_cidr_range
   }
 }
 
@@ -21,8 +25,8 @@ resource "google_compute_network" "main" {
   name                    = local.network_name
   project                 = var.project_id
   auto_create_subnetworks = false
-  routing_mode           = "REGIONAL"
-  description            = "Shared VPC network for ${var.environment} environment"
+  routing_mode            = "REGIONAL"
+  description             = "Shared VPC network for ${var.environment} environment"
 }
 
 # Subnets
@@ -49,7 +53,8 @@ resource "google_compute_subnetwork" "subnets" {
   depends_on = [google_compute_network.main]
 }
 
-# Cloud Router for NAT
+# Cloud Router for NAT (kept as it handles NAT for internal VMs, but not
+# traffic routing for the firewall)
 resource "google_compute_router" "router" {
   count   = var.enable_nat ? 1 : 0
   name    = "${local.network_name}-router"
@@ -58,15 +63,15 @@ resource "google_compute_router" "router" {
   network = google_compute_network.main.id
 }
 
-# Cloud NAT
+# Cloud NAT (kept for other non-firewalled VMs)
 resource "google_compute_router_nat" "nat" {
-  count  = var.enable_nat ? 1 : 0
-  name   = "${local.network_name}-nat"
+  count   = var.enable_nat ? 1 : 0
+  name    = "${local.network_name}-nat"
   project = var.project_id
-  router = google_compute_router.router[0].name
-  region = google_compute_router.router[0].region
+  router  = google_compute_router.router[0].name
+  region  = google_compute_router.router[0].region
 
-  nat_ip_allocate_option             = "AUTO_ONLY"
+  nat_ip_allocate_option       = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 
   log_config {
@@ -106,8 +111,8 @@ resource "google_compute_firewall" "rules" {
 
   source_ranges           = each.value.source_ranges
   destination_ranges      = each.value.destination_ranges
-  source_tags            = each.value.source_tags
-  target_tags            = each.value.target_tags
+  source_tags             = each.value.source_tags
+  target_tags             = each.value.target_tags
   target_service_accounts = each.value.target_service_accounts
 }
 
@@ -138,8 +143,12 @@ resource "google_compute_firewall" "allow_internal" {
   description = "Allow internal communication within VPC"
 }
 
+# Default firewall rules from your original configuration are handled by the
+# explicit PAN-OS policies and a final deny-all rule.
+# The IAP rule `allow_ssh` is kept as it is a GCP-level firewall rule that works
+# on the compute instance itself, and doesn't need to pass through the Palo Alto firewall.
 resource "google_compute_firewall" "allow_ssh" {
-  name    = "${local.network_name}-allow-ssh"
+  name    = "${local.network_name}-allow-ssh-iap"
   project = var.project_id
   network = google_compute_network.main.name
 
