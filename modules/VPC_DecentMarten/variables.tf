@@ -1,58 +1,53 @@
 variable "project_id" {
-  description = "The GCP project ID"
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name (dev, prod, etc.)"
   type        = string
 }
 
 variable "region" {
-  description = "The GCP region"
-  type        = string
-  default     = "us-central1"
-}
-
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Default GCP region"
   type        = string
 }
 
-variable "subnets" {
-  description = "List of subnets to create"
+variable "vpcs" {
+  description = "List of VPCs and their subnets"
   type = list(object({
-    name                     = string
-    ip_cidr_range           = string
-    region                  = optional(string)
-    private_ip_google_access = optional(bool, true)
-    secondary_ranges = optional(list(object({
-      range_name    = string
-      ip_cidr_range = string
-    })), [])
+    name    = string
+    subnets = list(object({
+      name                     = string
+      ip_cidr_range            = string
+      region                   = string
+      private_ip_google_access = optional(bool, false)
+      secondary_ranges         = optional(list(object({
+        range_name    = string
+        ip_cidr_range = string
+      })), [])
+    }))
   }))
 }
 
 variable "firewall_rules" {
-  description = "List of firewall rules to create"
+  description = "List of firewall rules per VPC"
   type = list(object({
-    name      = string
-    direction = string
-    priority  = optional(number, 1000)
-    allow = optional(list(object({
+    name          = string
+    direction     = string
+    priority      = number
+    allow         = list(object({
       protocol = string
-      ports    = optional(list(string))
-    })), [])
-    deny = optional(list(object({
-      protocol = string
-      ports    = optional(list(string))
-    })), [])
-    source_ranges      = optional(list(string))
-    destination_ranges = optional(list(string))
-    source_tags        = optional(list(string))
-    target_tags        = optional(list(string))
-    target_service_accounts = optional(list(string))
+      ports    = list(string)
+    }))
+    source_ranges = list(string)
+    target_tags   = list(string)
+    vpc_name      = string
   }))
-  default = []
 }
 
 variable "enable_nat" {
-  description = "Enable Cloud NAT for private subnets"
+  description = "Enable Cloud NAT"
   type        = bool
-  default     = true
+  default     = false
 }

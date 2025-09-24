@@ -17,40 +17,11 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 3.0.2"
     }
-    #panos = {
-    #  source  = "PaloAltoNetworks/panos"
-    #  version = "~> 2.0.0"
-    #}
-  }
-  backend "gcs" {
-    bucket  = "srinivas-terraform-state"
-    prefix = "dev"
   }
 }
 
-provider "google" {
-  credentials = file(var.srinivas_credentials)
-}
-
-# Configure the Kubernetes provider to connect to the GKE cluster
 provider "kubernetes" {
   host                   = "https://${google_container_cluster.primary.endpoint}"
   token                  = data.google_client_config.current.access_token
   cluster_ca_certificate = base64decode(google_container_cluster.primary.master_auth.0.cluster_ca_certificate)
 }
-
-/* provider "helm" {
-  kubernetes = {
-  host = google_container_cluster.gke.endpoint
-  token = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
-  }
-  
-}
-*/
-/*
-provider "panos" {
-  hostname = var.panos_hostname
-  username = var.panos_username
-  password = var.panos_password
-} */

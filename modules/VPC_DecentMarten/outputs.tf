@@ -1,29 +1,26 @@
-output "network_name" {
-  description = "The name of the VPC network"
-  value       = google_compute_network.main.name
+output "vpc_networks" {
+  value = { for k, v in google_compute_network.vpc : k => v.self_link }
 }
 
-output "network_id" {
-  description = "The ID of the VPC network"
-  value       = google_compute_network.main.id
+output "subnetworks" {
+  value = { for k, v in google_compute_subnetwork.subnet : k => v.self_link }
 }
 
-output "network_self_link" {
-  description = "The URI of the VPC network"
-  value       = google_compute_network.main.self_link
-}
-
-output "subnets" {
-  description = "Map of subnet names to their details"
+output "gke_subnet_name" {
+  description = "Names of all subnets that have 'gke' in their name"
   value = {
-    for k, subnet in google_compute_subnetwork.subnets : k => {
-      name              = subnet.name
-      id                = subnet.id
-      self_link         = subnet.self_link
-      ip_cidr_range     = subnet.ip_cidr_range
-      region            = subnet.region
-      secondary_ranges  = subnet.secondary_ip_range
-    }
+    for k, v in google_compute_subnetwork.subnet :
+    k => v.name
+    if length(regexall("gke", lower(v.name))) > 0
+  }
+}
+
+output "gke_subnet_self_link" {
+  description = "Self links of all subnets that have 'gke' in their name"
+  value = {
+    for k, v in google_compute_subnetwork.subnet :
+    k => v.self_link
+    if length(regexall("gke", lower(v.name))) > 0
   }
 }
 
@@ -42,12 +39,4 @@ output "random_suffix" {
   value       = random_pet.network_suffix.id
 }
 
-output "gke_subnet_name" {
-  description = "Name of the GKE subnet (assumes first subnet is for GKE)"
-  value       = length(var.subnets) > 0 ? google_compute_subnetwork.subnets[var.subnets[0].name].name : null
-}
 
-output "gke_subnet_self_link" {
-  description = "Self link of the GKE subnet"
-  value       = length(var.subnets) > 0 ? google_compute_subnetwork.subnets[var.subnets[0].name].self_link : null
-}
