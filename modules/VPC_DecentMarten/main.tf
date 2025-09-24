@@ -85,7 +85,8 @@ resource "google_compute_firewall" "rules" {
 
   project   = var.project_id
   name      = each.value.name
-  network   = google_compute_network.vpc["evolving-gecko-mgmt"].self_link
+  #network   = google_compute_network.vpc["evolving-gecko-mgmt"].self_link
+  network = each.value.vpc_name
   direction = each.value.direction
   priority  = each.value.priority
 

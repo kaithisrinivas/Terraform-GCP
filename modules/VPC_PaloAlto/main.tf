@@ -77,11 +77,11 @@ locals {
 ################################################################################
 
 # Assuming you already created the subnet using google_compute_subnetwork
-data "google_compute_subnetwork" "mgmt" {
+/*data "google_compute_subnetwork" "mgmt" {
   name   = "${var.environment}-vpc-${var.subnets[3].name}" # Example: dev-vpc-mgmt
   region = var.region
 }
-
+*/
 # Deploy the Palo Alto VM-Series firewall instance
 resource "google_compute_instance" "palo_alto_vm" {
   name         = "palo-alto-firewall-${random_pet.network_suffix.id}"
@@ -101,7 +101,7 @@ resource "google_compute_instance" "palo_alto_vm" {
   # Management interface on the `mgmt` subnet
   network_interface {
     #subnetwork = var.management_subnet_id
-    subnetwork = data.google_compute_subnetwork.mgmt.self_link
+    subnetwork = "dev-subnet-mgmt"
     network_ip = "10.2.48.5" # A static IP within your mgmt subnet
     access_config {}
     subnetwork_project = var.project_id

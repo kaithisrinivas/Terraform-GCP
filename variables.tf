@@ -88,3 +88,18 @@ variable "gke_subnet_id" {
     description = "The GKE subnet ID"
     type = string
 }
+
+variable "region_zone" {
+  description = "The GCP zone within the region"
+  type        = string
+}
+
+variable "node_count" {
+  description = "The number of nodes in the GKE cluster"
+  type        = number
+}
+
+variable "nginx_replica_count" {
+  description = "The number of NGINX replicas to deploy"
+  type        = number
+}
